@@ -51,76 +51,12 @@ filter_features_rec([FeatHead|FeatTail], [Head|Tail], FilteredFeatures) :-
 
 % getArtistTracks(+ArtistName, -TrackIds, -TrackNames) 5 points
 getArtistTracks(ArtistName, TrackIds, TrackNames) :-
-    artist(ArtistName,_,AlbumIds),
-    getAlbumTrackIds(AlbumIds,TrackIds,TrackNames),
-    getTrackTrackName(TrackIds,TrackNames).
+    findAllThesePair(ArtistName,TrackIds,TrackNames).
 
-
-getAlbumTrackIds([],[],_).
-getAlbumTrackIds([H|T],TrackIds,TrackNames) :-
-    getAlbumTrackIds(T,TrackIds2,TrackNames),
-    album(H,_,_,M),
-    append(M,TrackIds2,TrackIds).
-
-
-
-
-% Append Two Lists [1,2,3] + [5,6] = [1,2,3,5,6]
-append([],L2,L2).
-append([H|T],L2,[H|L3]) :- append(T,L2,L3).
-
-
-
-% Gets TrackName From TrackIds = [1,2,3,4]
-getTrackTrackName([],[]).
-getTrackTrackName([H|T],TrackNames) :-
-    getTrackTrackName(T,TrackNames2),
-    catch(track(H,M,_,_,_), X, (write('error from p'), nl)),
-    TrackNames = [M|TrackNames2].
-
-
-
-    
-% loop([],[]).
-% loop([H|T],TrackNames) :-
-%     loop(T,TrackNames2),
-%     track(_,M,_,_,_),
-%     TrackNames = [M|TrackNames2].
-        
-
-
-
-
-
-
-
-
-
-
-
-% getAlbumTracks(AlbumName,TrackIds,TrackNames) :-
-%     album(AlbumName,_,_,TrackIds2),
-%     TrackIds = [TrackIds|TrackIds2].
-
-
-
-
-
-% getArtistTracks(+ArtistName, -TrackIds, -TrackNames) 5 points
-% getArtistTracks(ArtistName, TrackIds, TrackNames) :-
-%     track(TrackIds,TrackNames,ArtistName,_,_).
-
-
-
-
-
-
-
-
-
-
-
-
+% Human and What he likes
+findAllThesePair(ArtistName,TrackIds,TrackNames) :- 
+    findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds),
+    findall(TrackNames, ( track(_,TrackNames,[ArtistName|_],_,_) ), TrackNames).
 
 
 
@@ -141,3 +77,4 @@ getTrackTrackName([H|T],TrackNames) :-
 % getTrackGenre(+TrackId, -Genres) 5 points
 
 % discoverPlaylist(+LikedGenres, +DislikedGenres, +Features, +FileName, -Playlist) 30 points
+
