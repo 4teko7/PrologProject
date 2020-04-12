@@ -81,6 +81,22 @@ trackDistance(TrackId1, TrackId2, Score):-
     findTrackFeatureWithTrackId(TrackId2,Track2Feature),
     distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score),!.
 
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  albumDistance(+AlbumId1, +AlbumId2, -Score) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+albumDistance(AlbumId1, AlbumId2, Score) :-
+    albumFeatures(AlbumId1,Album1Feature),
+    albumFeatures(AlbumId2,Album2Feature),
+    distanceBetweenTwoFeature(Album1Feature,Album2Feature,Score),!.
+    
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistDistance(+ArtistName1, +ArtistName2, -Score)   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+artistDistance(ArtistName1, ArtistName2, Score) :-
+    artistFeatures(ArtistName1, Artist1Features),
+    artistFeatures(ArtistName2, Artist2Features),
+    distanceBetweenTwoFeature(Artist1Features,Artist2Features,Score),!.
+
+
 
 distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score):-
     differenceSquareThenSumOfElementsOfList(Track1Feature,Track2Feature,SummedDifScore),
