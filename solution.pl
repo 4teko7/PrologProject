@@ -55,10 +55,20 @@ findAllTracksIdsAndTrackNamesWithArtistName(ArtistName,TrackIds,TrackNames) :-
     findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds),
     findall(TrackNames, ( track(_,TrackNames,[ArtistName|_],_,_) ), TrackNames).
 
-
+findAllTracksIdsWithArtistName(ArtistName,TrackIds) :- 
+    findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds).
 
 findAllTrackFeaturesWithAlbumName(AlbumName,AlbumFeatures):-
     findall(AlbumFeatures, ( track(_,_,_,AlbumName,AlbumFeatures) ), AlbumFeatures).
+
+
+findAllTrackFeaturesWithTrackIds([],_,_).
+findAllTrackFeaturesWithTrackIds([H|T],Temp,ArtistFeatures):-
+    findAllTrackFeaturesWithTrackIds(T,Temp2,ArtistFeatures2),
+    findall(Temp2, ( track(H,_,_,_,Temp2) ), Temp2),
+    append(Temp2,ArtistFeatures2,ArtistFeatures).
+    % ArtistFeatures = [Temp2 | ArtistFeatures2].
+
 
 
 albumFeatures(AlbumId, AlbumFeatures) :-
@@ -68,6 +78,18 @@ albumFeatures(AlbumId, AlbumFeatures) :-
     filter_features(AverageFeatures,TempAlbumFeatures2),
     listLength(TempAlbumFeatures,Length),
     averageOfListLengthGiven(TempAlbumFeatures2,Length,AlbumFeatures),!.
+
+
+% artistFeatures(+ArtistName, -ArtistFeatures) 5 points
+artistFeatures(ArtistName, ArtistFeatures) :-
+    findAllTracksIdsWithArtistName(ArtistName, TrackIds),
+    findAllTrackFeaturesWithTrackIds(TrackIds,TempArtistFeatures,ResultArtistFeatures),
+    nestedListToSingleList(ResultArtistFeatures,AverageFeatures),
+    filter_features(AverageFeatures,TempArtistFeatures2),
+    listLength(ResultArtistFeatures,Length),
+    averageOfListLengthGiven(TempArtistFeatures2,Length,ArtistFeatures),!.
+
+
 
 
 
