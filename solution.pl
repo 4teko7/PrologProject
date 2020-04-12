@@ -46,9 +46,58 @@ filter_features_rec([FeatHead|FeatTail], [Head|Tail], FilteredFeatures) :-
 %                                                     Valence, Tempo, DurationMs, TimeSignature]).
 
 
-% getArtistTracks(+ArtistName, -TrackIds, -TrackNames) 5 points
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  getArtistTracks(+ArtistName, -TrackIds, -TrackNames) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
 getArtistTracks(ArtistName, TrackIds, TrackNames) :-
     findAllTracksIdsAndTrackNamesWithArtistName(ArtistName,TrackIds,TrackNames).
+
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  albumFeatures(+AlbumId, -AlbumFeatures) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+albumFeatures(AlbumId, AlbumFeatures) :-
+    album(AlbumId,AlbumName,_,_),
+    findAllTrackFeaturesWithAlbumName(AlbumName,TempAlbumFeatures),
+    nestedListToSingleList(TempAlbumFeatures,AverageFeatures),
+    filter_features(AverageFeatures,FilteredAverageFeatures),
+    listLength(TempAlbumFeatures,Length),
+    averageOfListLengthGiven(FilteredAverageFeatures,Length,AlbumFeatures),!.
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistFeatures(+ArtistName, -ArtistFeatures) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+artistFeatures(ArtistName, ArtistFeatures) :-
+    findAllTracksIdsWithArtistName(ArtistName, TrackIds),
+    findAllTrackFeaturesWithTrackIds(TrackIds,TempArtistFeatures,ResultArtistFeatures),
+    nestedListToSingleList(ResultArtistFeatures,AverageFeatures),
+    filter_features(AverageFeatures,FilteredAverageFeatures),
+    listLength(ResultArtistFeatures,Length),
+    averageOfListLengthGiven(FilteredAverageFeatures,Length,ArtistFeatures),!.
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  trackDistance(+TrackId1, +TrackId2, -Score) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+trackDistance(TrackId1, TrackId2, Score):-
+    findTrackFeatureWithTrackId(TrackId1,Track1Feature),
+    findTrackFeatureWithTrackId(TrackId2,Track2Feature),
+    distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score),!.
+
+
+distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score):-
+    differenceSquareThenSumOfElementsOfList(Track1Feature,Track2Feature,SummedDifScore),
+    Score is SummedDifScore ** 0.5.
+
+
+differenceSquareThenSumOfElementsOfList([],[],0).
+differenceSquareThenSumOfElementsOfList([H1|T1],[H2|T2],Score):-
+    differenceSquareThenSumOfElementsOfList(T1,T2,Score2),
+    M is ((H1 - H2) ** 2),
+    Score is M+Score2.
+
+
+findTrackFeatureWithTrackId(TrackId,TrackFeature) :-
+    track(TrackId,_,_,_,TempTrackFeature),
+    filter_features(TempTrackFeature,TrackFeature).
+
 
 % Human and What he likes
 findAllTracksIdsAndTrackNamesWithArtistName(ArtistName,TrackIds,TrackNames) :- 
@@ -62,35 +111,12 @@ findAllTrackFeaturesWithAlbumName(AlbumName,AlbumFeatures):-
     findall(AlbumFeatures, ( track(_,_,_,AlbumName,AlbumFeatures) ), AlbumFeatures).
 
 
+
 findAllTrackFeaturesWithTrackIds([],_,_).
 findAllTrackFeaturesWithTrackIds([H|T],Temp,ArtistFeatures):-
     findAllTrackFeaturesWithTrackIds(T,Temp2,ArtistFeatures2),
     findall(Temp2, ( track(H,_,_,_,Temp2) ), Temp2),
     append(Temp2,ArtistFeatures2,ArtistFeatures).
-    % ArtistFeatures = [Temp2 | ArtistFeatures2].
-
-
-
-albumFeatures(AlbumId, AlbumFeatures) :-
-    album(AlbumId,AlbumName,_,_),
-    findAllTrackFeaturesWithAlbumName(AlbumName,TempAlbumFeatures),
-    nestedListToSingleList(TempAlbumFeatures,AverageFeatures),
-    filter_features(AverageFeatures,TempAlbumFeatures2),
-    listLength(TempAlbumFeatures,Length),
-    averageOfListLengthGiven(TempAlbumFeatures2,Length,AlbumFeatures),!.
-
-
-% artistFeatures(+ArtistName, -ArtistFeatures) 5 points
-artistFeatures(ArtistName, ArtistFeatures) :-
-    findAllTracksIdsWithArtistName(ArtistName, TrackIds),
-    findAllTrackFeaturesWithTrackIds(TrackIds,TempArtistFeatures,ResultArtistFeatures),
-    nestedListToSingleList(ResultArtistFeatures,AverageFeatures),
-    filter_features(AverageFeatures,TempArtistFeatures2),
-    listLength(ResultArtistFeatures,Length),
-    averageOfListLengthGiven(TempArtistFeatures2,Length,ArtistFeatures),!.
-
-
-
 
 
 % Average Of A List With Length Given.
