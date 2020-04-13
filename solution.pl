@@ -89,12 +89,84 @@ albumDistance(AlbumId1, AlbumId2, Score) :-
     
 
 
-% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistDistance(+ArtistName1, +ArtistName2, -Score)   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistDistance(+ArtistName1, +ArtistName2, -Score) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
 artistDistance(ArtistName1, ArtistName2, Score) :-
     artistFeatures(ArtistName1, Artist1Features),
     artistFeatures(ArtistName2, Artist2Features),
     distanceBetweenTwoFeature(Artist1Features,Artist2Features,Score),!.
 
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  findMostSimilarTracks(+TrackId, -SimilarIds, -SimilarNames) 10 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+findMostSimilarTracks(TrackId, SimilarIds, SimilarNames):-
+    track(TrackId,_,_,_,SpecificTrackFeature),
+    findall(TempTrackNames,( track(_,TempTrackNames,_,_,_) ),TempTrackNames),
+    findall(TempTrackIds,( track(TempTrackIds,_,_,_,_) ),TempTrackIds),
+    findall(TempTrackFeatures,( track(_,_,_,_,TempTrackFeatures) ),TempTrackFeatures),
+    findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,TempTrackFeatures,TempTrackNames,TempTrackIds,Score),
+    sortAscending(Score,SortedScore),
+    % writeToFile(SortedScore),
+    getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames),
+    % writeToFile("SimilarNames : " + SimilarNames),
+    % writeToFile("SimilarIds : " + SimilarIds),!.
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  findMostSimilarAlbums(+AlbumId, -SimilarIds, -SimilarNames) 10 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+% findMostSimilarAlbums(AlbumId, SimilarIds, SimilarNames):-
+%     albumFeatures(AlbumId,SpecificAlbumFeature),
+    
+%     % track(TrackId,_,_,_,SpecificTrackFeature),
+%     album(),
+%     getAllTrackFeaturesFromAlbumNames(),
+%     findall(TempTrackNames,( track(_,TempTrackNames,_,_,_) ),TempTrackNames),
+%     findall(TempTrackIds,( track(TempTrackIds,_,_,_,_) ),TempTrackIds),
+%     findall(TempTrackFeatures,( track(_,_,_,_,TempTrackFeatures) ),TempTrackFeatures),
+%     findDistanceOfAllTracksFromSpecificTrack(SpecificAlbumFeature,TempTrackFeatures,TempTrackNames,TempTrackIds,Score),
+%     sortAscending(Score,SortedScore),
+%     % writeToFile(SortedScore),
+%     getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames),
+
+
+
+
+
+
+
+
+findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[],[],[],[]).
+findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[H1|T1],[H2|T2],[H3|T3],Score):-
+    findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,T1,T2,T3,Score2),
+    distanceBetweenTwoFeature(SpecificTrackFeature,H1,Score3),
+    Score = [[Score3,H3,H2]|Score2].
+
+
+getFirstNElementsOfList(0,_,_,_):- !.
+getFirstNElementsOfList(_,[],[],[]).
+getFirstNElementsOfList(N,[H|T],SimilarIds,SimilarNames):-
+    N1 is N - 1,
+    getFirstNElementsOfList(N1,T,SimilarIds2,SimilarNames2),
+    [_|[L|[R]]] = H, %[1 , 2 , 3]
+    % M = [L,R],
+    writeToFile("H : " + H),
+    writeToFile("L : " + L),
+    writeToFile("R : " + R),
+    writeToFile("M : " + M),
+    append([L],SimilarIds2,SimilarIds),
+    append([R],SimilarNames2,SimilarNames).
+    
+
+
+% print(0, _) :- !.
+% print(_, []).
+% print(N, [H|T]) :- write(H), nl, N1 is N - 1, print(N1, T).
+
+
+
+
+sortAscending(List, Sorted):-
+    sort(0,  @=<, List,  Sorted).
 
 % ########  Distance Between Two Features ######################
 distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score):-
