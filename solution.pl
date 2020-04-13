@@ -58,19 +58,18 @@ getArtistTracks(ArtistName, TrackIds, TrackNames) :-
 albumFeatures(AlbumId, AlbumFeatures) :-
     album(AlbumId,AlbumName,_,_),
     findAllTrackFeaturesWithAlbumName(AlbumName,TempAlbumFeatures),
-    nestedListToSingleList(TempAlbumFeatures,AverageFeatures),
-    filter_features(AverageFeatures,FilteredAverageFeatures),
     listLength(TempAlbumFeatures,Length),
+    nestedListToSingleListAndAddElements(TempAlbumFeatures,AverageFeatures),
+    filter_features(AverageFeatures,FilteredAverageFeatures),
     averageOfListLengthGiven(FilteredAverageFeatures,Length,AlbumFeatures),!.
 
 % @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistFeatures(+ArtistName, -ArtistFeatures) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
 
 artistFeatures(ArtistName, ArtistFeatures) :-
-    findAllTracksIdsWithArtistName(ArtistName, TrackIds),
-    findAllTrackFeaturesWithTrackIds(TrackIds,TempArtistFeatures,ResultArtistFeatures),
-    nestedListToSingleList(ResultArtistFeatures,AverageFeatures),
-    filter_features(AverageFeatures,FilteredAverageFeatures),
+    findAllTracksFeaturesWithArtistName(ArtistName,ResultArtistFeatures),
     listLength(ResultArtistFeatures,Length),
+    nestedListToSingleListAndAddElements(ResultArtistFeatures,AverageFeatures),
+    filter_features(AverageFeatures,FilteredAverageFeatures),
     averageOfListLengthGiven(FilteredAverageFeatures,Length,ArtistFeatures),!.
 
 
@@ -97,7 +96,7 @@ artistDistance(ArtistName1, ArtistName2, Score) :-
     distanceBetweenTwoFeature(Artist1Features,Artist2Features,Score),!.
 
 
-
+% ########  Distance Between Two Features ######################
 distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score):-
     differenceSquareThenSumOfElementsOfList(Track1Feature,Track2Feature,SummedDifScore),
     Score is SummedDifScore ** 0.5.
@@ -109,7 +108,10 @@ differenceSquareThenSumOfElementsOfList([H1|T1],[H2|T2],Score):-
     M is ((H1 - H2) ** 2),
     Score is M+Score2.
 
+% ##############################################################
 
+
+% Checked @@
 findTrackFeatureWithTrackId(TrackId,TrackFeature) :-
     track(TrackId,_,_,_,TempTrackFeature),
     filter_features(TempTrackFeature,TrackFeature).
@@ -120,9 +122,21 @@ findAllTracksIdsAndTrackNamesWithArtistName(ArtistName,TrackIds,TrackNames) :-
     findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds),
     findall(TrackNames, ( track(_,TrackNames,[ArtistName|_],_,_) ), TrackNames).
 
-findAllTracksIdsWithArtistName(ArtistName,TrackIds) :- 
-    findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds).
 
+
+
+% Checked @@
+findAllTracksFeaturesWithArtistName(ArtistName,ArtistFeatures) :- 
+    findall(ArtistFeatures, ( track(_,_,Y,_,ArtistFeatures),member(ArtistName,Y) ), ArtistFeatures).
+
+
+
+findAllTracksIdsWithArtistName(ArtistName,TrackIds) :- 
+    findall(TrackIds, ( track(TrackIds,_,[ArtistName],_,_)), TrackIds).
+
+
+
+% Checked @@
 findAllTrackFeaturesWithAlbumName(AlbumName,AlbumFeatures):-
     findall(AlbumFeatures, ( track(_,_,_,AlbumName,AlbumFeatures) ), AlbumFeatures).
 
@@ -146,9 +160,9 @@ averageOfListLengthGiven([H|T],Length,AlbumFeatures):-
 
 % Add All Lists' Elements Inside One Nested Main List. For example, 1. element of 1. list and 1. element of 2. list will be added.
 % Result will be Only One List.
-nestedListToSingleList([],[]).
-nestedListToSingleList([H|T],AverageFeatures):-
-    nestedListToSingleList(T,AverageFeatures2),
+nestedListToSingleListAndAddElements([],[]).
+nestedListToSingleListAndAddElements([H|T],AverageFeatures):-
+    nestedListToSingleListAndAddElements(T,AverageFeatures2),
     addTwoList(H,AverageFeatures2,AverageFeatures).
 
 
