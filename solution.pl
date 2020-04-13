@@ -56,12 +56,14 @@ getArtistTracks(ArtistName, TrackIds, TrackNames) :-
 % @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  albumFeatures(+AlbumId, -AlbumFeatures) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
 
 albumFeatures(AlbumId, AlbumFeatures) :-
-    album(AlbumId,AlbumName,_,_),
-    findAllTrackFeaturesWithAlbumName(AlbumName,TempAlbumFeatures),
+    album(AlbumId,_,_,AlbumTrackIds),
+    findFeatureListWithTrackIdsList(AlbumTrackIds,TempAlbumFeatures),
     listLength(TempAlbumFeatures,Length),
+    % writeToFile("TempAlbumFeatures : " + TempAlbumFeatures),
     nestedListToSingleListAndAddElements(TempAlbumFeatures,AverageFeatures),
-    filter_features(AverageFeatures,FilteredAverageFeatures),
-    averageOfListLengthGiven(FilteredAverageFeatures,Length,AlbumFeatures),!.
+    % writeToFile("AverageFeatures : " + AverageFeatures),
+    averageOfListLengthGiven(AverageFeatures,Length,AlbumFeatures),!.
+    % writeToFile("AlbumFeatures : " + AlbumFeatures),!.
 
 % @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  artistFeatures(+ArtistName, -ArtistFeatures) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
 
@@ -84,7 +86,9 @@ trackDistance(TrackId1, TrackId2, Score):-
 
 albumDistance(AlbumId1, AlbumId2, Score) :-
     albumFeatures(AlbumId1,Album1Feature),
+    writeToFile("Album1Feature : " + Album1Feature),
     albumFeatures(AlbumId2,Album2Feature),
+    writeToFile("Album2Feature : " + Album2Feature),
     distanceBetweenTwoFeature(Album1Feature,Album2Feature,Score),!.
     
 
@@ -106,32 +110,39 @@ findMostSimilarTracks(TrackId, SimilarIds, SimilarNames):-
     findall(TempTrackFeatures,( track(_,_,_,_,TempTrackFeatures) ),TempTrackFeatures),
     findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,TempTrackFeatures,TempTrackNames,TempTrackIds,Score),
     sortAscending(Score,SortedScore),
-    % writeToFile(SortedScore),
-    getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames),
+    writeToFile(SortedScore),
+    getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames).
     % writeToFile("SimilarNames : " + SimilarNames),
     % writeToFile("SimilarIds : " + SimilarIds),!.
 
 
 % @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  findMostSimilarAlbums(+AlbumId, -SimilarIds, -SimilarNames) 10 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
 
-% findMostSimilarAlbums(AlbumId, SimilarIds, SimilarNames):-
-%     albumFeatures(AlbumId,SpecificAlbumFeature),
+findMostSimilarAlbums(AlbumId, SimilarIds, SimilarNames):-
+    albumFeatures(AlbumId,SpecificAlbumFeature),
+    findall(AlbumIds,( album(AlbumIds,_,_,_) ),AlbumIds),
+    findall(AlbumNames,( album(_,AlbumNames,_,_) ),AlbumNames),
+    findall(AlbumTrackIds,( album(_,_,_,AlbumTrackIds) ),AlbumTrackIds),
+    findAllTrackFeaturesWithTrackIds(AlbumTrackIds,AlbumTrackFeatures),
+    findDistanceOfAllTracksFromSpecificTrack(SpecificAlbumFeature,AlbumTrackFeatures,AlbumNames,AlbumIds,Score),
+    sortAscending(Score,SortedScore),
+    writeToFile(""),
+    writeToFile("SortedScore : " + SortedScore),
+    getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames),!.
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  findMostSimilarArtists(+ArtistName, -SimilarArtists) 10 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+findMostSimilarArtists(ArtistName, SimilarArtists):-
+    artistFeatures(ArtistName,SpecificArtistFeature),
+    findall(ArtistNames,( artist(ArtistNames,_,_) ),ArtistNames),
+    findAllTrackFeaturesWithArtistNames(ArtistNames,ArtistTrackFeatures),
+
     
-%     % track(TrackId,_,_,_,SpecificTrackFeature),
-%     album(),
-%     getAllTrackFeaturesFromAlbumNames(),
-%     findall(TempTrackNames,( track(_,TempTrackNames,_,_,_) ),TempTrackNames),
-%     findall(TempTrackIds,( track(TempTrackIds,_,_,_,_) ),TempTrackIds),
-%     findall(TempTrackFeatures,( track(_,_,_,_,TempTrackFeatures) ),TempTrackFeatures),
-%     findDistanceOfAllTracksFromSpecificTrack(SpecificAlbumFeature,TempTrackFeatures,TempTrackNames,TempTrackIds,Score),
-%     sortAscending(Score,SortedScore),
-%     % writeToFile(SortedScore),
-%     getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarNames),
-
-
-
-
-
+    findDistanceOfAllTracksFromSpecificTrack(SpecificArtistFeature,ArtistTrackFeatures,ArtistNames,AlbumIds,Score),
+    sortAscending(Score,SortedScore),
+    writeToFile(""),
+    writeToFile("SortedScore : " + SortedScore),
+    getFirstNElementsOfList(30,SortedScore,SimilarIds,SimilarArtists),!.
 
 
 
@@ -148,19 +159,11 @@ getFirstNElementsOfList(N,[H|T],SimilarIds,SimilarNames):-
     N1 is N - 1,
     getFirstNElementsOfList(N1,T,SimilarIds2,SimilarNames2),
     [_|[L|[R]]] = H, %[1 , 2 , 3]
-    % M = [L,R],
-    writeToFile("H : " + H),
-    writeToFile("L : " + L),
-    writeToFile("R : " + R),
-    writeToFile("M : " + M),
     append([L],SimilarIds2,SimilarIds),
     append([R],SimilarNames2,SimilarNames).
     
 
 
-% print(0, _) :- !.
-% print(_, []).
-% print(N, [H|T]) :- write(H), nl, N1 is N - 1, print(N1, T).
 
 
 
@@ -185,8 +188,9 @@ differenceSquareThenSumOfElementsOfList([H1|T1],[H2|T2],Score):-
 
 % Checked @@
 findTrackFeatureWithTrackId(TrackId,TrackFeature) :-
-    track(TrackId,_,_,_,TempTrackFeature),
-    filter_features(TempTrackFeature,TrackFeature).
+    (track(TrackId,_,_,_,TempTrackFeature),
+    filter_features(TempTrackFeature,TrackFeature));
+    A = 3.
 
 
 % Human and What he likes
@@ -213,12 +217,60 @@ findAllTrackFeaturesWithAlbumName(AlbumName,AlbumFeatures):-
     findall(AlbumFeatures, ( track(_,_,_,AlbumName,AlbumFeatures) ), AlbumFeatures).
 
 
+% Finds TrackIds List (Nested List) from AlbumIds List List
+findTrackIdsWithAlbumIds([],[]).
+findTrackIdsWithAlbumIds([H|T],TrackIds):-
+    findTrackIdsWithAlbumIds(T,TrackIds2),
+    (album(H,_,_,TempTrackIds),
+    ( isVariableFree(TrackIds2), TrackIds = TempTrackIds;
+    (\+ isVariableFree(TrackIds2)), TrackIds = [TempTrackIds|TrackIds2]));
+    A = 3.
 
-findAllTrackFeaturesWithTrackIds([],_,_).
-findAllTrackFeaturesWithTrackIds([H|T],Temp,ArtistFeatures):-
-    findAllTrackFeaturesWithTrackIds(T,Temp2,ArtistFeatures2),
-    findall(Temp2, ( track(H,_,_,_,Temp2) ), Temp2),
-    append(Temp2,ArtistFeatures2,ArtistFeatures).
+
+
+
+% Takes Lists like this : [[1,1,1],[2,2,2],[3,3,3]]
+findAllTrackFeaturesWithTrackIds([],[]).
+findAllTrackFeaturesWithTrackIds([H|T],Features):-
+    findAllTrackFeaturesWithTrackIds(T,Features2),
+
+    findFeatureListWithTrackIdsList(H,Temp2),
+    listLength(Temp2,Length),Length =\= 0, nestedListToSingleListAndAddElements(Temp2,Temp3),
+    ( isVariableFree(Features2), Features = [Temp3];
+    (\+ isVariableFree(Features2)), Features = [Temp3|Features2]).
+
+
+
+
+
+% Finds Feature List from Track Id List
+findFeatureListWithTrackIdsList([],[]).
+findFeatureListWithTrackIdsList([H|T],AlbumFeatures):-
+    findFeatureListWithTrackIdsList(T,AlbumFeatures2),
+    findall(TempTrackFeature, (track(H,_,_,_,TempTrackFeature)) ,TempTrackFeature),
+    [TempTrackFeature2] = TempTrackFeature,
+    listLength(TempTrackFeature2,Length),Length =\= 0, writeToFile("Length : " + Length),filter_features(TempTrackFeature2,FilteredTempTrackFeature),
+    ( isVariableFree(AlbumFeatures2), AlbumFeatures = [FilteredTempTrackFeature];
+    (\+ isVariableFree(AlbumFeatures2)), AlbumFeatures = [FilteredTempTrackFeature|AlbumFeatures2]).
+
+
+
+% Finds Feature List from Artist Names List 
+findAllTrackFeaturesWithArtistNames([],[]).
+findAllTrackFeaturesWithArtistNames([H|T],ArtistFeatures):-
+    findAllTrackFeaturesWithArtistNames(T,ArtistFeatures2),
+    writeToFile("H : " + H),
+    artistFeatures(H,TempTrackFeature),
+    writeToFile("TempTrackFeature : " + TempTrackFeature),
+    % nestedListToSingleListAndAddElements(TempTrackFeature,TempTrackFeature2),
+    % writeToFile("TempTrackFeature2 : " + TempTrackFeature2),
+    % filter_features(TempTrackFeature2,TempTrackFeature3),
+    % writeToFile("TempTrackFeature3 : " + TempTrackFeature3),
+    ( isVariableFree(ArtistFeatures2), ArtistFeatures = [TempTrackFeature];
+    (\+ isVariableFree(ArtistFeatures2)), ArtistFeatures = [TempTrackFeature|ArtistFeatures2]),
+    writeToFile("AlbumFeatures : " + ArtistFeatures).
+
+
 
 
 % Average Of A List With Length Given.
@@ -236,6 +288,7 @@ nestedListToSingleListAndAddElements([],[]).
 nestedListToSingleListAndAddElements([H|T],AverageFeatures):-
     nestedListToSingleListAndAddElements(T,AverageFeatures2),
     addTwoList(H,AverageFeatures2,AverageFeatures).
+
 
 
 % Add Two List.
@@ -260,6 +313,28 @@ writeToFile(X):-
 % Append Two Lists [1,2,3] + [5,6] = [1,2,3,5,6]
 append([],L2,L2).
 append([H|T],L2,[H|L3]) :- append(T,L2,L3).
+
+
+
+
+%  Removes last element of list.
+removeLastElementOfList([],[]).
+removeLastElementOfList([X|Xs], Ys) :-                 
+    removeLastElementOfList2(Xs, Ys, X).           
+
+removeLastElementOfList2([], [], _).
+removeLastElementOfList2([X1|Xs], [X0|Ys], X0) :-  
+    removeLastElementOfList2(Xs, Ys, X1). 
+
+
+
+%  Is Variable Free Or Not
+isVariableFree(Var):-
+    \+(\+(Var=0)),
+    \+(\+(Var=1)).
+
+
+
 
 % albumFeatures(+AlbumId, -AlbumFeatures) 5 points
 % artistFeatures(+ArtistName, -ArtistFeatures) 5 points
