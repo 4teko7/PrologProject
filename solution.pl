@@ -161,8 +161,7 @@ getTrackGenre(TrackId, Genres) :-
 discoverPlaylist(LikedGenres, DislikedGenres, Features, FileName, Playlist):-
     findall(AllArtistNames,(artist(AllArtistNames,AllGenres,_),\+ isEmpty(AllGenres)),AllArtistNames),
     findall(AllGenres,(artist(_,AllGenres,_),\+ isEmpty(AllGenres)),AllGenres),
-    splitNestedStringsListWithACharacter(AllGenres,". -,_",SplittedNestedGenresList),
-    collectArtistNamesFromWantedGenreList(SplittedNestedGenresList,AllArtistNames,LikedGenres,DislikedGenres,WantedArtistNames),
+    collectArtistNamesFromWantedGenreList(AllGenres,AllArtistNames,LikedGenres,DislikedGenres,WantedArtistNames),
     findAllTrackIdsWithArtistNames(WantedArtistNames,AllTrackIds),
     findAllFeaturesWithTrackIdListNotNested(AllTrackIds,AllTrackFeatures), % Features Filtered in this function
     findDistanceOfAllFeaturesFromSpecificFeature(Features,AllTrackFeatures,AllTrackIds,Score),
@@ -326,17 +325,48 @@ splitNestedStringsListWithACharacter([H|T],Character,SplittedNestedGenresList):-
     SplittedNestedGenresList = [TempSplittedNestedGenresList | SplittedNestedGenresList2].
 
 
+
+
 % @ @ CORRECT @ @
+% Obtain All Artist Names Whose genre List contains liked genres but not disliked genres
 collectArtistNamesFromWantedGenreList([],[],LikedGenres,DislikedGenres,[]).
 collectArtistNamesFromWantedGenreList([H1|T1],[H2|T2],LikedGenres,DislikedGenres,WantedArtistNames):-
     collectArtistNamesFromWantedGenreList(T1,T2,LikedGenres,DislikedGenres,WantedArtistNames2),
-    ((intersection(H1,DislikedGenres,X),
-    isEmpty(X),
-    intersection(H1,LikedGenres,Y),
-    \+ isEmpty(Y),  
-    WantedArtistNames = [H2|WantedArtistNames2]);
-    WantedArtistNames = WantedArtistNames2).
-    % isDislikedGenresInTheGenreList(H1,),
+    lookStringListForContainingDislikedOrLikedGenres(H1,DislikedGenres,IsFound1),
+    lookStringListForContainingDislikedOrLikedGenres(H1,LikedGenres,IsFound2),
+    (
+        (isEmpty(IsFound1), (\+ isEmpty(IsFound2)) , WantedArtistNames = [H2 | WantedArtistNames2]);    
+        (WantedArtistNames = WantedArtistNames2)    
+    ).
+
+
+% @ @ CORRECT @ @
+% Makes Genre List A Single String and Sends To the Other Predicate to Check
+% Whether there is a substring of disliked or liked string in the genre string.
+lookStringListForContainingDislikedOrLikedGenres([],LikedGenres,[]).
+lookStringListForContainingDislikedOrLikedGenres([H|T],LikedGenres,IsFound):-
+    lookStringListForContainingDislikedOrLikedGenres(T,LikedGenres,IsFound2),
+    lookStringForContainingDislikedOrLikedGenreList(H,LikedGenres,Temp),
+    
+    (
+        ( (\+ isEmpty(Temp)) , IsFound = [Temp|IsFound2]);
+        (IsFound = IsFound2)    
+        
+    ).
+    % writeToFile("IsFound : " + IsFound).
+    
+
+
+% @ @ CORRECT @ @
+% Checks Whether there is a substring of the disliked or liked string in the genre string
+lookStringForContainingDislikedOrLikedGenreList(StringGenre,[],[]).
+lookStringForContainingDislikedOrLikedGenreList(StringGenre,[H|T],Temp):-
+    lookStringForContainingDislikedOrLikedGenreList(StringGenre,T,Temp2),
+    (
+    (isSubstring(StringGenre,H), Temp = [H|Temp2]);
+    (Temp = Temp2)
+    ).
+
 
 
 
@@ -469,6 +499,11 @@ splitStringList([H|T],Char,SplittedStringList):-
     splitStringList(T,Char,SplittedStringList2),
     splitString(H,Char,TempSplittedStringList2),
     append(TempSplittedStringList2,SplittedStringList2,SplittedStringList).
+
+
+isSubstring(String,Substring) :-
+    sub_string(String,_,_,_,Substring),!.
+
 
 
 % Check If List Empty
