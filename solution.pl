@@ -155,14 +155,25 @@ getTrackGenre(TrackId, Genres) :-
     track(TrackId,_,ArtistNames,_,_),
     findArtistGenresWithArtistNames(ArtistNames,Genres).
 
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  discoverPlaylist(+LikedGenres, +DislikedGenres, +Features, +FileName, -Playlist) 30 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+% COMPLETED
+discoverPlaylist(LikedGenres, DislikedGenres, Features, FileName, Playlist):-
+    findall(AllArtistNames,(artist(AllArtistNames,AllGenres,_),\+ isEmpty(AllGenres)),AllArtistNames),
+    findall(AllGenres,(artist(_,AllGenres,_),\+ isEmpty(AllGenres)),AllGenres),
+    splitNestedStringsListWithACharacter(AllGenres,". -,_",SplittedNestedGenresList),
+    collectArtistNamesFromWantedGenreList(SplittedNestedGenresList,AllArtistNames,LikedGenres,DislikedGenres,WantedArtistNames),
+    findAllTrackIdsWithArtistNames(WantedArtistNames,AllTrackIds),
+    findAllFeaturesWithTrackIdListNotNested(AllTrackIds,AllTrackFeatures), % Features Filtered in this function
+    findDistanceOfAllFeaturesFromSpecificFeature(Features,AllTrackFeatures,AllTrackIds,Score),
+    sortAscending(Score,SortedScore),
+    getFirstNElementsOfList2(30,SortedScore,SimilarIds),
+    writeToSpecificFile(FileName,SimilarIds),!.
 
 
 
-% findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[],[],[],[]).
-% findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[H1|T1],[H2|T2],[H3|T3],Score):-
-%     findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,T1,T2,T3,Score2),
-%     distanceBetweenTwoFeature(SpecificTrackFeature,H1,TempScore3),
-%     Score = [[TempScore3,H3,H2]|Score2].
+
+
 
 
 % @ @ CORRECT @ @
@@ -188,7 +199,7 @@ findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,[H1|T1],Score):-
 
 % @ @ CORRECT @ @
 % Returns First N elements (3 Elements inside each list) from NESTED LIST : [ [] [] ]
-getFirstNElementsOfList(0,_,_,_):- !.
+getFirstNElementsOfList(0,_,_,[]):- !.
 getFirstNElementsOfList(_,[],[],[]).
 getFirstNElementsOfList(N,[H|T],SimilarIds,SimilarNames):-
     N1 is N - 1,
@@ -200,7 +211,7 @@ getFirstNElementsOfList(N,[H|T],SimilarIds,SimilarNames):-
 
 % @ @ CORRECT @ @
 % Returns First N elements(2 Elements inside each list) from NESTED LIST : [ [] [] ]
-getFirstNElementsOfList2(0,_,_):- !.
+getFirstNElementsOfList2(0,_,[]):- !.
 getFirstNElementsOfList2(_,[],[]).
 getFirstNElementsOfList2(N,[H|T],SimilarNames):-
     N1 is N - 1,
@@ -307,7 +318,50 @@ findArtistGenresWithArtistNames([H|T],ArtistGenres):-
     artist(H,TempArtistGenres,_),
     append(TempArtistGenres,ArtistGenres2,ArtistGenres).
 
+% @ @ CORRECT @ @
+splitNestedStringsListWithACharacter([],Character,[]).
+splitNestedStringsListWithACharacter([H|T],Character,SplittedNestedGenresList):-
+    splitNestedStringsListWithACharacter(T,Character,SplittedNestedGenresList2),
+    splitStringList(H,Character,TempSplittedNestedGenresList),
+    SplittedNestedGenresList = [TempSplittedNestedGenresList | SplittedNestedGenresList2].
 
+
+% @ @ CORRECT @ @
+collectArtistNamesFromWantedGenreList([],[],LikedGenres,DislikedGenres,[]).
+collectArtistNamesFromWantedGenreList([H1|T1],[H2|T2],LikedGenres,DislikedGenres,WantedArtistNames):-
+    collectArtistNamesFromWantedGenreList(T1,T2,LikedGenres,DislikedGenres,WantedArtistNames2),
+    ((intersection(H1,DislikedGenres,X),
+    isEmpty(X),
+    intersection(H1,LikedGenres,Y),
+    \+ isEmpty(Y),  
+    WantedArtistNames = [H2|WantedArtistNames2]);
+    WantedArtistNames = WantedArtistNames2).
+    % isDislikedGenresInTheGenreList(H1,),
+
+
+
+findAllTrackIdsWithArtistNames([],[]).
+findAllTrackIdsWithArtistNames([H|T],TrackIds):-
+    findAllTrackIdsWithArtistNames(T,TrackIds2),
+    getArtistTracks(H,TempTrackIds,_),
+    % TrackIds = [TempTrackIds|TrackIds2]
+    append(TempTrackIds,TrackIds2,TrackIds).
+
+
+
+findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[],[],[]).
+findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[H1|T1],[H2|T2],Score):-
+    findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,T1,T2,Score2),
+    distanceBetweenTwoFeature(SpecificFeatures,H1,Distance),
+    Score = [[Distance,H2]|Score2].
+
+
+findAllFeaturesWithTrackIdListNotNested([],[]).
+findAllFeaturesWithTrackIdListNotNested([H|T],AllTrackFeatures):-
+    findAllFeaturesWithTrackIdListNotNested(T,AllTrackFeatures2),
+    track(H,_,_,_,TempAllTrackFeatures2),
+    filter_features(TempAllTrackFeatures2,FilteredTempAllTrackFeatures2),
+    AllTrackFeatures = [FilteredTempAllTrackFeatures2|AllTrackFeatures2].
 
 
 % @ @ CORRECT @ @
@@ -369,6 +423,11 @@ listLength([_|OurList], X) :-
 writeToFile(X):-
     open('writtenThing.txt', append, Stream), write(Stream,X), write(Stream,'\n'),close(Stream).
 
+
+writeToSpecificFile(FileName,Parameter):-
+    open(FileName, write, Stream), write(Stream,Parameter), write(Stream,'\n'),close(Stream).
+
+
 % @ @ CORRECT @ @
 % Append Two Lists [1,2,3] + [5,6] = [1,2,3,5,6]
 append([],L2,L2).
@@ -399,7 +458,21 @@ isVariableFree(Var):-
     \+(\+(Var=1)).
 
 
+% Split String With a Given Character and returns a list : ["a","b","c"]
+splitString(String,Char,List):-
+    split_string(String,Char,Char,TempList),
+    List = [String | TempList].
 
+% Split String With a Given Character and returns a list : ["a","b","c"]
+splitStringList([],Char,[]).
+splitStringList([H|T],Char,SplittedStringList):-
+    splitStringList(T,Char,SplittedStringList2),
+    splitString(H,Char,TempSplittedStringList2),
+    append(TempSplittedStringList2,SplittedStringList2,SplittedStringList).
+
+
+% Check If List Empty
+isEmpty(List):- not(member(_,List)).
 
 % albumFeatures(+AlbumId, -AlbumFeatures) 5 points
 % artistFeatures(+ArtistName, -ArtistFeatures) 5 points
