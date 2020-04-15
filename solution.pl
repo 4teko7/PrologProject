@@ -141,6 +141,23 @@ findMostSimilarArtists(ArtistName, SimilarArtists):-
 
 
 
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  filterExplicitTracks(+TrackList, -FilteredTracks) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+% COMPLETED
+filterExplicitTracks(TrackList, FilteredTracks):-
+    findExplicitTracksWithTrackIdsList(TrackList,FilteredTracks).
+
+
+% @@@@@   @@@@@   @@@@@   @@@@@   @@@@@  getTrackGenre(+TrackId, -Genres) 5 points   @@@@@   @@@@@   @@@@@   @@@@@    @@@@@   @@@@@   @@@@@
+
+% COMPLETED
+getTrackGenre(TrackId, Genres) :-
+    track(TrackId,_,ArtistNames,_,_),
+    findArtistGenresWithArtistNames(ArtistNames,Genres).
+
+
+
+
 % findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[],[],[],[]).
 % findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,[H1|T1],[H2|T2],[H3|T3],Score):-
 %     findDistanceOfAllTracksFromSpecificTrack(SpecificTrackFeature,T1,T2,T3,Score2),
@@ -148,28 +165,28 @@ findMostSimilarArtists(ArtistName, SimilarArtists):-
 %     Score = [[TempScore3,H3,H2]|Score2].
 
 
-
+% @ @ CORRECT @ @
 findDistanceOfAllTracksFromSpecificTrack(SpecificTrackId,[],[],[]).
 findDistanceOfAllTracksFromSpecificTrack(SpecificTrackId,[H1|T1],[H2|T2],Score):-
     findDistanceOfAllTracksFromSpecificTrack(SpecificTrackId,T1,T2,Score2),
     trackDistance(SpecificTrackId,H1,Distance),
     Score = [[Distance,H1,H2]|Score2].
 
-
+% @ @ CORRECT @ @
 findDistanceOfAllAlbumsFromSpecificAlbum(SpecificAlbumId,[],[],[]).
 findDistanceOfAllAlbumsFromSpecificAlbum(SpecificAlbumId,[H1|T1],[H2|T2],Score):-
     findDistanceOfAllAlbumsFromSpecificAlbum(SpecificAlbumId,T1,T2,Score2),
     albumDistance(SpecificAlbumId,H1,Distance),
     Score = [[Distance,H1,H2]|Score2].
 
-
+% @ @ CORRECT @ @
 findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,[],[]).
 findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,[H1|T1],Score):-
     findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,T1,Score2),
     artistDistance(SpecificArtistName,H1,Distance),
     Score = [[Distance,H1]|Score2].
 
-
+% @ @ CORRECT @ @
 % Returns First N elements (3 Elements inside each list) from NESTED LIST : [ [] [] ]
 getFirstNElementsOfList(0,_,_,_):- !.
 getFirstNElementsOfList(_,[],[],[]).
@@ -181,6 +198,7 @@ getFirstNElementsOfList(N,[H|T],SimilarIds,SimilarNames):-
     append([R],SimilarNames2,SimilarNames).
     
 
+% @ @ CORRECT @ @
 % Returns First N elements(2 Elements inside each list) from NESTED LIST : [ [] [] ]
 getFirstNElementsOfList2(0,_,_):- !.
 getFirstNElementsOfList2(_,[],[]).
@@ -190,17 +208,20 @@ getFirstNElementsOfList2(N,[H|T],SimilarNames):-
     [_|L] = H, %[1 , 2]
     append(L,SimilarNames2,SimilarNames).
 
-
-
+% @ @ CORRECT @ @
+% Sort List 
 sortAscending(List, Sorted):-
     sort(0,  @=<, List,  Sorted).
 
 % ########  Distance Between Two Features ######################
+
+% @ @ CORRECT @ @
 distanceBetweenTwoFeature(Track1Feature,Track2Feature,Score):-
     differenceSquareThenSumOfElementsOfList(Track1Feature,Track2Feature,SummedDifScore),
     Score is SummedDifScore ** 0.5.
 
 
+% @ @ CORRECT @ @
 differenceSquareThenSumOfElementsOfList([],[],0).
 differenceSquareThenSumOfElementsOfList([H1|T1],[H2|T2],Score):-
     differenceSquareThenSumOfElementsOfList(T1,T2,Score2),
@@ -215,31 +236,13 @@ findTrackFeatureWithTrackId(TrackId,TrackFeature) :-
     filter_features(TempTrackFeature,TrackFeature).
 
 
-% % Human and What he likes
-% findAllTracksIdsAndTrackNamesWithArtistName(ArtistName,TrackIds,TrackNames) :- 
-%     findall(TrackIds, ( track(TrackIds,_,[ArtistName|_],_,_) ), TrackIds),
-%     findall(TrackNames, ( track(_,TrackNames,[ArtistName|_],_,_) ), TrackNames).
-
-
-
-
-% % Checked @@
-% findAllTracksFeaturesWithArtistName(ArtistName,ArtistFeatures) :- 
-%     findall(ArtistFeatures, ( track(_,_,Y,_,ArtistFeatures),member(ArtistName,Y) ), ArtistFeatures).
-
-
-
-% findAllTracksIdsWithArtistName(ArtistName,TrackIds) :- 
-%     findall(TrackIds, ( track(TrackIds,_,[ArtistName],_,_)), TrackIds).
-
-
+% @ @ CORRECT @ @
 % Filter Nested Feature List = [ [], [] ]
 filterNestedFeatureList([],[]).
 filterNestedFeatureList([H|T], ResultFeatureNestedList):-
     filterNestedFeatureList(T,ResultFeatureNestedList2),
     filter_features(H,FilteredFeature),
     ResultFeatureNestedList = [FilteredFeature|ResultFeatureNestedList2].
-
 
 
 % Checked @@
@@ -253,21 +256,18 @@ findTrackIdsWithAlbumIds([],[]).
 findTrackIdsWithAlbumIds([H|T],TrackIds):-
     findTrackIdsWithAlbumIds(T,TrackIds2),
     album(H,_,_,TempTrackIds),
-    ( isVariableFree(TrackIds2), TrackIds = TempTrackIds;
-    (\+ isVariableFree(TrackIds2)), TrackIds = [TempTrackIds|TrackIds2]).
+    TrackIds = [TempTrackIds|TrackIds2].
 
 
 
-
-% Takes Lists like this : [[1,1,1],[2,2,2],[3,3,3]]
+% @ @ CORRECT @ @
+% Takes Lists like this : [[1,1,1],[2,2,2],[3,3,3]] and returns nested list : [ [1,2,3] , [1,2,3] ]
 findAllTrackFeaturesWithTrackIds([],[]).
 findAllTrackFeaturesWithTrackIds([H|T],Features):-
     findAllTrackFeaturesWithTrackIds(T,Features2),
     findFeatureListWithTrackIdsList(H,Temp2),
     nestedListToSingleListAndAddElements(Temp2,Temp3),
-    % writeToFile("Temp3 : " + Temp3),
-    ( isVariableFree(Features2), Features = [Temp3];
-    (\+ isVariableFree(Features2)), Features = [Temp3|Features2]).
+    Features = [Temp3|Features2].
 
 
 
@@ -279,25 +279,34 @@ findFeatureListWithTrackIdsList([H|T],AlbumFeatures):-
     findFeatureListWithTrackIdsList(T,AlbumFeatures2),
     track(H,_,_,_,TempTrackFeature),
     filter_features(TempTrackFeature,FilteredTempTrackFeature),
-    ( isVariableFree(AlbumFeatures2), AlbumFeatures = [FilteredTempTrackFeature];
-    (\+ isVariableFree(AlbumFeatures2)), AlbumFeatures = [FilteredTempTrackFeature|AlbumFeatures2]).
+    AlbumFeatures = [FilteredTempTrackFeature|AlbumFeatures2].
 
 
 
-% % Finds Feature List from Artist Names List 
-% findAllTrackFeaturesWithArtistNames([],[]).
-% findAllTrackFeaturesWithArtistNames([H|T],ArtistFeatures):-
-%     findAllTrackFeaturesWithArtistNames(T,ArtistFeatures2),
-%     writeToFile("H : " + H),
-%     artistFeatures(H,TempTrackFeature),
-%     writeToFile("TempTrackFeature : " + TempTrackFeature),
-%     % nestedListToSingleListAndAddElements(TempTrackFeature,TempTrackFeature2),
-%     % writeToFile("TempTrackFeature2 : " + TempTrackFeature2),
-%     % filter_features(TempTrackFeature2,TempTrackFeature3),
-%     % writeToFile("TempTrackFeature3 : " + TempTrackFeature3),
-%     ( isVariableFree(ArtistFeatures2), ArtistFeatures = [TempTrackFeature];
-%     (\+ isVariableFree(ArtistFeatures2)), ArtistFeatures = [TempTrackFeature|ArtistFeatures2]),
-%     writeToFile("AlbumFeatures : " + ArtistFeatures).
+% @ @ CORRECT @ @
+% Find Explicit Tracks With Track Ids = [1,2,3,4]
+findExplicitTracksWithTrackIdsList([],[]).
+findExplicitTracksWithTrackIdsList([H|T],ExplicitTracks):-
+    findExplicitTracksWithTrackIdsList(T,ExplicitTracks2),
+    track(H,_,_,_,TempExplicitTracks),
+    [IsExplicit|_] = TempExplicitTracks,
+    
+    
+    (
+        (IsExplicit =:= 0, ExplicitTracks = [H|ExplicitTracks2]) ;
+        (IsExplicit =:= 1, ExplicitTracks = ExplicitTracks2)
+    ).
+    
+
+
+% @ @ CORRECT @ @
+% Finds ArtistGenres List = (Not Nested List) from ArtistNames List = (Not Nested)
+findArtistGenresWithArtistNames([],[]).
+findArtistGenresWithArtistNames([H|T],ArtistGenres):-
+    findArtistGenresWithArtistNames(T,ArtistGenres2),
+    artist(H,TempArtistGenres,_),
+    append(TempArtistGenres,ArtistGenres2,ArtistGenres).
+
 
 
 
@@ -308,8 +317,6 @@ averageOfListLengthGiven([H|T],Length,AlbumFeatures):-
     averageOfListLengthGiven(T,Length,AlbumFeatures2),
     M is H / Length,
     AlbumFeatures = [M|AlbumFeatures2].
-
-
 
 
 
@@ -341,7 +348,7 @@ nestedListToSingleListAndAddElements([H|T],AverageFeatures):-
     addTwoList(H,AverageFeatures2,AverageFeatures).
 
 
-
+% @ @ CORRECT @ @
 % Add Two List.
 addTwoList([],[],[]).
 addTwoList(H,[],ResultList):- ResultList = H.
@@ -351,38 +358,41 @@ addTwoList([H1|T1],[H2|T2],ResultList):-
     ResultList = [M|ResultList2].
 
 
+% @ @ CORRECT @ @
 % Gives Length Of Any List.
 listLength([], 0 ).
 listLength([_|OurList], X) :- 
     listLength(OurList,N) , X is N+1 .
 
 
+% @ @ CORRECT @ @
 writeToFile(X):-
     open('writtenThing.txt', append, Stream), write(Stream,X), write(Stream,'\n'),close(Stream).
 
-
+% @ @ CORRECT @ @
 % Append Two Lists [1,2,3] + [5,6] = [1,2,3,5,6]
 append([],L2,L2).
 append([H|T],L2,[H|L3]) :- append(T,L2,L3).
 
 
 
-
+% @ @ CORRECT @ @
 %  Removes last element of list.
 removeLastElementOfList([],[]).
 removeLastElementOfList([X|Xs], Ys) :-                 
     removeLastElementOfList2(Xs, Ys, X).           
 
+% @ @ CORRECT @ @
 removeLastElementOfList2([], [], _).
 removeLastElementOfList2([X1|Xs], [X0|Ys], X0) :-  
     removeLastElementOfList2(Xs, Ys, X1). 
 
-
+% @ @ CORRECT @ @
 % Remove First Element Of List
 removeFirstElementOfList(List1,ResultList):-
     [_|ResultList] = List1.
 
-
+% @ @ CORRECT @ @
 %  Is Variable Free Or Not
 isVariableFree(Var):-
     \+(\+(Var=0)),
