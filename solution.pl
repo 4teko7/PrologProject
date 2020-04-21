@@ -162,12 +162,16 @@ discoverPlaylist(LikedGenres, DislikedGenres, Features, FileName, Playlist):-
     findall(AllArtistNames,(artist(AllArtistNames,AllGenres,_),\+ isEmpty(AllGenres)),AllArtistNames),
     findall(AllGenres,(artist(_,AllGenres,_),\+ isEmpty(AllGenres)),AllGenres),
     collectArtistNamesFromWantedGenreList(AllGenres,AllArtistNames,LikedGenres,DislikedGenres,WantedArtistNames),
-    findAllTrackIdsWithArtistNames(WantedArtistNames,AllTrackIds),
+    findAllTrackIdsWithArtistNames(WantedArtistNames,AllTrackIds,ArtistNamesList),
     findAllFeaturesWithTrackIdListNotNested(AllTrackIds,AllTrackFeatures), % Features Filtered in this function
-    findDistanceOfAllFeaturesFromSpecificFeature(Features,AllTrackFeatures,AllTrackIds,Score),
+    findDistanceOfAllFeaturesFromSpecificFeature(Features,AllTrackFeatures,AllTrackIds,ArtistNamesList,Score),
     sortAscending(Score,SortedScore),
-    getFirstNElementsOfList2(30,SortedScore,SimilarIds),
-    writeToSpecificFile(FileName,SimilarIds),!.
+    getFirstNElementsOfList3(30,SortedScore,Distance,SimilarIds,SimilarNames,ArtistNames),
+    Playlist = SimilarIds,
+    writeToSpecificFile(FileName,SimilarIds),
+    writeToSpecificFile(FileName,SimilarNames),
+    writeToSpecificFile(FileName,ArtistNames),
+    writeToSpecificFile(FileName,Distance),!.
 
 
 
@@ -195,6 +199,24 @@ findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,[H1|T1],Score):-
     findDistanceOfAllArtistsFromSpecificArtist(SpecificArtistName,T1,Score2),
     artistDistance(SpecificArtistName,H1,Distance),
     Score = [[Distance,H1]|Score2].
+
+
+
+% @ @ CORRECT @ @
+% Returns First N elements (3 Elements inside each list) from NESTED LIST : [ [] [] ]
+getFirstNElementsOfList3(0,_,[],[],[],[]):- !.
+getFirstNElementsOfList3(_,[],[],[],[],[]).
+getFirstNElementsOfList3(N,[H|T],Distance,SimilarIds,SimilarNames,ArtistNames):-
+    N1 is N - 1,
+    getFirstNElementsOfList3(N1,T,Distance2,SimilarIds2,SimilarNames2,ArtistNames2),
+    [D|[L|[R|[A]]]] = H, %[1 , 2 , 3]
+    append([D],Distance2,Distance),
+    append([L],SimilarIds2,SimilarIds),
+    append([R],SimilarNames2,SimilarNames),
+    append([A],ArtistNames2,ArtistNames).
+    % writeToFile("Distance : " + Distance + "SimilarIds : " + SimilarIds + " SimilarNames : " + SimilarNames + " ArtistNames : " + ArtistNames).
+
+
 
 % @ @ CORRECT @ @
 % Returns First N elements (3 Elements inside each list) from NESTED LIST : [ [] [] ]
@@ -370,20 +392,24 @@ lookStringForContainingDislikedOrLikedGenreList(StringGenre,[H|T],Temp):-
 
 
 
-findAllTrackIdsWithArtistNames([],[]).
-findAllTrackIdsWithArtistNames([H|T],TrackIds):-
-    findAllTrackIdsWithArtistNames(T,TrackIds2),
+findAllTrackIdsWithArtistNames([],[],[]).
+findAllTrackIdsWithArtistNames([H|T],TrackIds,ArtistNamesList):-
+    findAllTrackIdsWithArtistNames(T,TrackIds2,ArtistNamesList2),
     getArtistTracks(H,TempTrackIds,_),
+    listLength(TempTrackIds,N),
+    addNTimesToList(N,H,ArtistNamesListTemp),
+    append(ArtistNamesListTemp,ArtistNamesList2,ArtistNamesList),
     % TrackIds = [TempTrackIds|TrackIds2]
     append(TempTrackIds,TrackIds2,TrackIds).
 
 
 
-findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[],[],[]).
-findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[H1|T1],[H2|T2],Score):-
-    findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,T1,T2,Score2),
+findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[],[],[],[]).
+findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,[H1|T1],[H2|T2],[H3|T3],Score):-
+    findDistanceOfAllFeaturesFromSpecificFeature(SpecificFeatures,T1,T2,T3,Score2),
     distanceBetweenTwoFeature(SpecificFeatures,H1,Distance),
-    Score = [[Distance,H2]|Score2].
+    track(H2,TrackName,_,_,_),
+    Score = [[Distance,H2,TrackName,[H3]]|Score2].
 
 
 findAllFeaturesWithTrackIdListNotNested([],[]).
@@ -392,6 +418,16 @@ findAllFeaturesWithTrackIdListNotNested([H|T],AllTrackFeatures):-
     track(H,_,_,_,TempAllTrackFeatures2),
     filter_features(TempAllTrackFeatures2,FilteredTempAllTrackFeatures2),
     AllTrackFeatures = [FilteredTempAllTrackFeatures2|AllTrackFeatures2].
+
+
+
+% addNTimesToList(0,_):- !.
+addNTimesToList(0,ArtistName,[]).
+addNTimesToList(N,ArtistName,List):-
+    N1 is N - 1,
+    addNTimesToList(N1,ArtistName,List2),
+    List = [ArtistName|List2].
+
 
 
 % @ @ CORRECT @ @
@@ -455,7 +491,7 @@ writeToFile(X):-
 
 
 writeToSpecificFile(FileName,Parameter):-
-    open(FileName, write, Stream), write(Stream,Parameter), write(Stream,'\n'),close(Stream).
+    open(FileName, append, Stream), write(Stream,Parameter), write(Stream,'\n'),close(Stream).
 
 
 % @ @ CORRECT @ @
