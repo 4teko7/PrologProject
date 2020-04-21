@@ -179,6 +179,7 @@ discoverPlaylist(LikedGenres, DislikedGenres, Features, FileName, Playlist):-
 
 
 
+
 % @ @ CORRECT @ @
 findDistanceOfAllTracksFromSpecificTrack(SpecificTrackId,[],[],[]).
 findDistanceOfAllTracksFromSpecificTrack(SpecificTrackId,[H1|T1],[H2|T2],Score):-
